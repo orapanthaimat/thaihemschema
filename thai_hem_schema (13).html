@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thai Hem – Schema 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Prompt:wght@400;600;700&display=swap');
+:root{
+  --bg:#0f1117;--surface:#1a1d2e;--card:#22263a;--border:#2e3350;
+  --accent:#f5c842;--accent2:#ff7043;--green:#4caf89;--purple:#b388ff;
+  --text:#e8eaf6;--muted:#8b92b8;--radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ---- LOGIN SCREEN ---- */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 32px;width:100%;max-width:380px;text-align:center;}
+.login-logo{font-family:'Prompt',sans-serif;font-size:26px;font-weight:700;color:var(--accent);margin-bottom:4px;}
+.login-logo span{color:var(--text);font-weight:400;}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:28px;}
+.login-form{text-align:left;}
+.login-form label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+.login-form select,.login-form input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'Sarabun',sans-serif;font-size:15px;padding:10px 14px;border-radius:8px;outline:none;margin-bottom:14px;appearance:none;}
+.login-form select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238b92b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+.login-form input:focus,.login-form select:focus{border-color:var(--accent);}
+.btn-login{width:100%;background:var(--accent);color:#0f1117;font-family:'Prompt',sans-serif;font-weight:700;font-size:15px;padding:12px;border-radius:8px;border:none;cursor:pointer;margin-top:4px;}
+.btn-login:hover{opacity:.88;}
+.login-error{color:#ef5350;font-size:13px;margin-top:10px;display:none;}
+
+/* ---- HEADER ---- */
+header{background:linear-gradient(135deg,#1a1d2e,#0f1117);border-bottom:1px solid var(--border);padding:11px 18px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200;}
+.logo{font-family:'Prompt',sans-serif;font-size:18px;font-weight:700;color:var(--accent);}
+.logo span{color:var(--text);font-weight:400;}
+.user-pill{font-size:12px;color:var(--accent);background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.2);padding:4px 12px;border-radius:20px;font-weight:600;}
+.admin-pill{font-size:12px;color:#ef5350;background:rgba(239,83,80,.1);border:1px solid rgba(239,83,80,.25);padding:4px 12px;border-radius:20px;font-weight:600;}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.btn-sm{background:var(--card);border:1px solid var(--border);color:var(--muted);font-family:'Sarabun',sans-serif;font-size:12px;padding:5px 12px;border-radius:8px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent);}
+.btn-sm.red:hover{border-color:#ef5350;color:#ef5350;}
+.btn-sm.green{border-color:rgba(76,175,137,.4);color:var(--green);}
+.btn-sm.green:hover{border-color:var(--green);background:rgba(76,175,137,.1);}
+
+/* ---- UPLOAD ---- */
+#upload-section{max-width:520px;margin:50px auto;padding:0 18px;text-align:center;}
+.upload-box{border:2px dashed var(--border);border-radius:var(--radius);padding:48px 24px;background:var(--surface);cursor:pointer;transition:all .2s;}
+.upload-box:hover,.upload-box.drag{border-color:var(--accent);background:#1e2135;}
+.upload-icon{font-size:40px;margin-bottom:10px;}
+.upload-box h2{font-size:17px;font-weight:600;margin-bottom:6px;}
+.upload-box p{color:var(--muted);font-size:13px;line-height:1.6;}
+#file-input{display:none;}
+.btn-primary{display:inline-block;margin-top:16px;background:var(--accent);color:#0f1117;font-family:'Prompt',sans-serif;font-weight:600;font-size:14px;padding:9px 24px;border-radius:8px;border:none;cursor:pointer;}
+
+/* ---- MANAGE PASSWORDS (admin only) ---- */
+.pwd-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:18px;}
+.pwd-section h3{font-family:'Prompt',sans-serif;font-size:14px;color:var(--accent);margin-bottom:12px;}
+.pwd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;}
+.pwd-row{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 10px;}
+.pwd-name{font-size:13px;font-weight:600;flex:1;min-width:70px;}
+.pwd-input{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;padding:5px 8px;border-radius:6px;width:90px;outline:none;}
+.pwd-input:focus{border-color:var(--accent);}
+.pwd-save-btn{background:var(--accent);color:#0f1117;border:none;font-size:11px;font-weight:700;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;}
+
+/* ---- APP ---- */
+#app{display:none;padding:14px 18px;max-width:100%;}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;}
+.select-wrap{display:flex;flex-direction:column;gap:3px;}
+.select-wrap label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+select{background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'Sarabun',sans-serif;font-size:14px;padding:7px 30px 7px 11px;border-radius:8px;cursor:pointer;outline:none;min-width:130px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238b92b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+select:focus{border-color:var(--accent);}
+.this-week-badge{font-size:11px;color:var(--accent);background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.25);padding:4px 10px;border-radius:20px;display:none;}
+.repeat-badge{font-size:11px;color:#64b5f6;background:rgba(100,181,246,.1);border:1px solid rgba(100,181,246,.25);padding:4px 10px;border-radius:20px;display:none;}
+.modified-badge{font-size:11px;color:var(--accent2);background:rgba(255,112,67,.1);border:1px solid rgba(255,112,67,.25);padding:4px 10px;border-radius:20px;display:none;}
+.info-badge{font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 12px;margin-left:auto;}
+.info-badge strong{color:var(--accent);}
+
+.week-title{font-family:'Prompt',sans-serif;font-size:19px;font-weight:700;color:var(--text);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.week-title small{color:var(--muted);font-weight:400;font-size:12px;}
+.reset-btn{font-size:11px;color:var(--accent2);background:rgba(255,112,67,.08);border:1px solid rgba(255,112,67,.2);padding:3px 10px;border-radius:6px;cursor:pointer;margin-left:auto;}
+.reset-btn:hover{background:rgba(255,112,67,.18);}
+
+/* ---- TABLE ---- */
+.day-section{margin-bottom:20px;}
+.day-heading{font-family:'Prompt',sans-serif;font-size:14px;font-weight:600;color:#0f1117;background:var(--accent);display:inline-block;padding:4px 14px;border-radius:6px 6px 0 0;}
+.schedule-table-wrap{overflow-x:auto;border-radius:0 var(--radius) var(--radius) var(--radius);border:1px solid var(--border);}
+.schedule-table{border-collapse:collapse;width:100%;min-width:600px;background:var(--surface);}
+.schedule-table th{background:var(--card);color:var(--accent);font-family:'Prompt',sans-serif;font-size:13px;font-weight:600;padding:8px 11px;text-align:left;white-space:nowrap;border-right:1px solid var(--border);border-bottom:2px solid var(--border);}
+.schedule-table th:first-child{background:#1c203a;color:var(--muted);font-size:10px;width:40px;min-width:40px;}
+.schedule-table td{vertical-align:top;padding:0;border-right:1px solid var(--border);border-bottom:1px solid var(--border);min-width:180px;}
+.schedule-table td:first-child{width:40px;min-width:40px;max-width:40px;background:#13162a;text-align:center;vertical-align:middle;font-size:11px;color:var(--muted);padding:5px;}
+.schedule-table tr:last-child td{border-bottom:none;}
+.schedule-table td:last-child,.schedule-table th:last-child{border-right:none;}
+.job-cell{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .15s;position:relative;}
+.job-cell:last-child{border-bottom:none;}
+.job-cell:hover{background:rgba(255,255,255,.03);}
+.edit-hint{position:absolute;top:5px;right:6px;font-size:10px;color:var(--muted);opacity:0;transition:opacity .15s;}
+.job-cell:hover .edit-hint{opacity:1;}
+.job-time{font-family:'Prompt',sans-serif;font-weight:700;font-size:13px;color:var(--accent);display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.dur-tag{font-size:10px;color:var(--accent2);background:rgba(255,112,67,.12);padding:1px 5px;border-radius:4px;font-weight:600;}
+.pair-tag{font-size:10px;color:var(--purple);background:rgba(179,136,255,.1);border:1px solid rgba(179,136,255,.2);padding:1px 7px;border-radius:20px;display:inline-block;margin-top:3px;font-weight:600;}
+.job-customer{font-size:12px;font-weight:600;color:var(--text);margin-top:2px;}
+.job-addr{font-size:11px;color:var(--muted);margin-top:2px;}
+.job-phone{font-size:11px;color:var(--green);margin-top:2px;}
+.job-notes{font-size:10px;color:#9fa8da;margin-top:3px;background:rgba(63,81,181,.1);border-left:2px solid #3f51b5;padding:3px 7px;border-radius:0 4px 4px 0;line-height:1.5;white-space:pre-line;}
+.travel-tag{font-size:10px;color:var(--muted);margin-top:2px;font-style:italic;}
+.add-job-btn{width:100%;padding:8px;border:none;background:transparent;color:var(--muted);font-size:11px;cursor:pointer;text-align:center;border-top:1px dashed rgba(255,255,255,.06);}
+.add-job-btn:hover{color:var(--accent);background:rgba(245,200,66,.04);}
+.empty-slot{min-height:50px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:repeating-linear-gradient(135deg,rgba(255,255,255,.013) 0px,rgba(255,255,255,.013) 2px,transparent 2px,transparent 10px);}
+.empty-slot:hover{background:rgba(76,175,137,.07);}
+.empty-slot span{font-size:11px;color:rgba(139,146,184,.28);}
+td.is-free{background:rgba(76,175,137,.04);}
+td.is-free .empty-slot{background:repeating-linear-gradient(135deg,rgba(76,175,137,.06) 0px,rgba(76,175,137,.06) 2px,transparent 2px,transparent 10px);}
+td.is-free .empty-slot:hover{background:rgba(76,175,137,.13);}
+th.is-free{color:var(--green)!important;background:rgba(76,175,137,.1)!important;}
+
+/* ---- MODAL ---- */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;}
+.modal h3{font-family:'Prompt',sans-serif;font-size:15px;font-weight:600;margin-bottom:14px;color:var(--accent);}
+.form-group{margin-bottom:11px;}
+.form-group label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;}
+.form-group input,.form-group textarea{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'Sarabun',sans-serif;font-size:14px;padding:8px 10px;border-radius:8px;outline:none;resize:vertical;}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--accent);}
+.modal-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;}
+.modal-actions button{flex:1;padding:9px;border-radius:8px;font-family:'Prompt',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;min-width:70px;}
+.btn-save{background:var(--accent);color:#0f1117;}
+.btn-delete{background:rgba(239,83,80,.15);color:#ef5350;border:1px solid rgba(239,83,80,.3)!important;}
+.btn-cancel{background:var(--card);color:var(--muted);border:1px solid var(--border)!important;}
+.tmpl-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;}
+.tmpl-info{background:rgba(100,181,246,.06);border:1px solid rgba(100,181,246,.15);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#90caf9;line-height:1.6;}
+
+#loading{text-align:center;padding:50px;color:var(--muted);}
+.spinner{display:inline-block;width:26px;height:26px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:10px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.no-data{text-align:center;padding:34px;color:var(--muted);}
+
+@media(max-width:600px){header{padding:9px 12px;}#app{padding:10px;}.info-badge{display:none!important;}}
+
+/* ---- PRINT ---- */
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  #login-screen,header,.controls,button,.add-job-btn,.edit-hint,.reset-btn,#saved-pill{display:none!important;}
+  body{background:#fff!important;color:#111!important;}
+  #app{display:block!important;padding:0!important;}
+  #main-content{display:block!important;}
+  .week-title{font-size:15px;color:#111;border-color:#ccc;}
+  .day-section{page-break-inside:avoid;}
+  .day-heading{background:#333!important;color:#fff!important;font-size:11px;}
+  .schedule-table-wrap{border:1px solid #ccc;border-radius:0;}
+  .schedule-table th{background:#f5f5f5!important;color:#333!important;font-size:10px;padding:5px 7px;}
+  .schedule-table th.is-free{background:#e8f5e9!important;color:#2e7d32!important;}
+  .schedule-table td{border-color:#e0e0e0!important;min-width:0!important;}
+  .job-cell{padding:4px 6px;}
+  .job-time{font-size:10px;color:#b8860b!important;}
+  .dur-tag{background:#fff3e0!important;color:#e65100!important;}
+  .pair-tag{background:#f3e5f5!important;color:#6a1b9a!important;}
+  .job-customer{font-size:10px;color:#111!important;}
+  .job-addr,.job-phone,.travel-tag{font-size:9px;color:#555!important;}
+  .job-notes{background:#f8f9ff!important;color:#444!important;font-size:9px;}
+  .empty-slot{background:#f9f9f9!important;min-height:24px;}
+  #print-header{display:block!important;}
+}
+#print-header{display:none;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #333;}
+#print-header h1{font-size:17px;font-weight:700;margin-bottom:2px;}
+#print-header p{font-size:11px;color:#555;}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Thai Hem <span>Schema</span></div>
+    <div class="login-sub">กรุณาเข้าสู่ระบบ</div>
+    <div class="login-form">
+      <label>ชื่อ</label>
+      <select id="login-name">
+        <option value="">— เลือกชื่อ —</option>
+      </select>
+      <label>รหัสผ่าน</label>
+      <input type="password" id="login-pw" placeholder="รหัสผ่าน" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="btn-login" onclick="doLogin()">เข้าสู่ระบบ</button>
+      <div class="login-error" id="login-error">ชื่อหรือรหัสผ่านไม่ถูกต้อง</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HEADER ===== -->
+<header style="display:none" id="main-header">
+  <div class="logo">Thai Hem <span>Schema</span></div>
+  <div id="user-pill-wrap"></div>
+  <div class="hdr-right" id="hdr-btns">
+    <button class="btn-sm" id="export-btn" style="display:none" onclick="exportPDF()">📄 PDF</button>
+    <button class="btn-sm green" id="tmpl-btn" style="display:none" onclick="openTmplModal()">🔁 วนซ้ำ</button>
+    <button class="btn-sm" id="update-btn" style="display:none" onclick="document.getElementById('file-input').click()">📂 อัปโหลดใหม่</button>
+    <button class="btn-sm" id="pwd-mgr-btn" style="display:none" onclick="togglePwdMgr()">🔑 จัดการรหัส</button>
+    <button class="btn-sm red" id="clear-btn" style="display:none" onclick="clearAll()">🗑</button>
+    <button class="btn-sm" onclick="logout()">ออกจากระบบ</button>
+  </div>
+</header>
+
+<!-- ===== MAIN APP ===== -->
+<div id="upload-section" style="display:none">
+  <div class="upload-box" id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <div class="upload-icon">📋</div>
+    <h2>อัปโหลดไฟล์ตารางงาน</h2>
+    <p>ลาก Excel (.xlsx) มาวาง หรือคลิกเลือกไฟล์<br>ระบบจะ <strong style="color:var(--accent)">จำข้อมูล + วนซ้ำอัตโนมัติ</strong></p>
+    <button class="btn-primary" onclick="event.stopPropagation()">เลือกไฟล์ Excel</button>
+  </div>
+  <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(event)">
+</div>
+
+<div id="app">
+  <div id="loading" style="display:none"><div><div class="spinner"></div></div>กำลังโหลด...</div>
+  <div id="main-content" style="display:none">
+
+    <!-- Password manager (admin only) -->
+    <div class="pwd-section" id="pwd-mgr" style="display:none">
+      <h3>🔑 รหัสผ่านพนักงาน</h3>
+      <div class="pwd-grid" id="pwd-grid"></div>
+    </div>
+
+    <div class="controls">
+      <div class="select-wrap" id="week-wrap"><label>สัปดาห์</label><select id="week-select" onchange="onWeekChange()"></select></div>
+      <div class="select-wrap" id="worker-wrap"><label>พนักงาน</label><select id="worker-select" onchange="renderAll()"></select></div>
+      <div class="this-week-badge" id="twb">📅 สัปดาห์นี้</div>
+      <div class="repeat-badge" id="rpb">🔁 วนซ้ำ</div>
+      <div class="modified-badge" id="modb">✏️ แก้ไขแล้ว</div>
+      <div class="info-badge" id="info-badge">–</div>
+    </div>
+
+    <div id="print-header">
+      <h1 id="ph-title">Thai Hem – ตารางงาน</h1>
+      <p id="ph-sub"></p>
+    </div>
+    <div id="schedule-output"></div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="edit-modal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modal-title">แก้ไขนัด</h3>
+    <div class="form-group"><label>เวลา</label><input id="f-time" placeholder="08:00-10:00"></div>
+    <div class="form-group"><label>ชั่วโมง</label><input id="f-dur" placeholder="2"></div>
+    <div class="form-group"><label>ชื่อลูกค้า</label><input id="f-customer"></div>
+    <div class="form-group"><label>ที่อยู่</label><input id="f-addr"></div>
+    <div class="form-group"><label>เบอร์โทร</label><input id="f-phone"></div>
+    <div class="form-group"><label>โน้ต</label><textarea id="f-notes" rows="2"></textarea></div>
+    <div class="form-group"><label>เวลาเดินทาง</label><input id="f-travel"></div>
+    <div class="modal-actions">
+      <button class="btn-save" onclick="saveJob()">💾 บันทึก</button>
+      <button class="btn-delete" id="del-btn" onclick="deleteJob()">🗑 ลบ</button>
+      <button class="btn-cancel" onclick="closeModal()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Template Modal -->
+<div class="modal-overlay" id="tmpl-modal" style="display:none" onclick="if(event.target===this)closeTmplModal()">
+  <div class="modal">
+    <h3>🔁 ตั้งการวนซ้ำ</h3>
+    <div class="tmpl-info" id="tmpl-info">–</div>
+    <div id="tmpl-list"></div>
+    <button style="width:100%;margin-top:8px;padding:7px;background:transparent;border:1px dashed var(--border);color:var(--muted);border-radius:8px;cursor:pointer;font-size:12px" onclick="addTmplRow()">+ เพิ่มคู่</button>
+    <div class="modal-actions">
+      <button class="btn-save" onclick="saveTmpl()">💾 บันทึก</button>
+      <button class="btn-cancel" onclick="closeTmplModal()">ปิด</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ======== IndexedDB ========
+let db=null;
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('ThaiHem5',1);r.onupgradeneeded=e=>e.target.result.createObjectStore('s');r.onsuccess=e=>{db=e.target.result;res();};r.onerror=rej;});}
+function dbSet(k,v){return new Promise((res,rej)=>{const tx=db.transaction('s','readwrite');tx.objectStore('s').put(v,k);tx.oncomplete=res;tx.onerror=rej;});}
+function dbGet(k){return new Promise((res,rej)=>{const tx=db.transaction('s','readonly');const r=tx.objectStore('s').get(k);r.onsuccess=()=>res(r.result);r.onerror=rej;});}
+function dbDel(k){return new Promise((res,rej)=>{const tx=db.transaction('s','readwrite');tx.objectStore('s').delete(k);tx.oncomplete=res;tx.onerror=rej;});}
+
+// ======== State ========
+let allData={}, overrides={}, tmplPairs={};
+// passwords: { "ADMIN": "xxxx", "Patricia": "1234", ... }
+let passwords={};
+let currentUser=null; // { name, isAdmin }
+
+const ADMIN_NAME='ADMIN';
+const DAY_TH={måndag:'จันทร์',tisdag:'อังคาร',onsdag:'พุธ',torsdag:'พฤหัส',fredag:'ศุกร์',lördag:'เสาร์',söndag:'อาทิตย์'};
+const DAY_ORDER=['måndag','tisdag','onsdag','torsdag','fredag','lördag','söndag'];
+const T_RE=/^\s*\d{1,2}[:.]\d{2}\s*[-–]\s*\d{1,2}[:.]\d{2}/;
+const BREAK_RE=/^(rast|lunch)\b/i;
+const TRAVEL_RE=/^restid\s*=/i;
+const SKIP_RE=/^(avboka|inte städa|flytta|pausa)/i;
+const PHONE_RE=/^[\d\s\-()+]{7,}$|^0\d{2}/;
+const NAME_RE=/^[A-Za-z\u00C0-\u017E][A-Za-z\u00C0-\u017E\s\-]{1,25}$/;
+
+// ======== Init ========
+openDB().then(async()=>{
+  const d=await dbGet('allData'),o=await dbGet('overrides'),t=await dbGet('tmplPairs'),p=await dbGet('passwords');
+  if(d){allData=d;overrides=o||{};tmplPairs=t||{};}
+  passwords=p||{[ADMIN_NAME]:'admin1234'};
+  buildLoginDropdown();
+});
+
+function buildLoginDropdown(){
+  const sel=document.getElementById('login-name');
+  sel.innerHTML=`<option value="">— เลือกชื่อ —</option>
+    <option value="${ADMIN_NAME}">👑 Admin (ผู้จัดการ)</option>`;
+  // Add workers from allData
+  const workers=getAllWorkers();
+  workers.forEach(w=>{
+    const opt=document.createElement('option');
+    opt.value=w;opt.textContent=w;
+    sel.appendChild(opt);
+  });
+}
+
+function getAllWorkers(){
+  const s=new Set();
+  Object.values(allData).forEach(wd=>Object.values(wd).forEach(d=>(d.workers||[]).forEach(w=>s.add(w))));
+  return Array.from(s).sort();
+}
+
+// ======== LOGIN ========
+function doLogin(){
+  const name=document.getElementById('login-name').value;
+  const pw=document.getElementById('login-pw').value;
+  const err=document.getElementById('login-error');
+  if(!name){err.textContent='กรุณาเลือกชื่อ';err.style.display='block';return;}
+  const correctPw=passwords[name];
+  // If no password set yet for this worker, any non-empty input works first time
+  if(correctPw===undefined){
+    if(!pw){err.textContent='กรุณาใส่รหัสผ่าน';err.style.display='block';return;}
+    // First login — set password
+    passwords[name]=pw;
+    dbSet('passwords',passwords);
+  } else if(pw!==correctPw){
+    err.textContent='รหัสผ่านไม่ถูกต้อง';err.style.display='block';
+    document.getElementById('login-pw').value='';
+    return;
+  }
+  err.style.display='none';
+  currentUser={name,isAdmin:name===ADMIN_NAME};
+  sessionStorage.setItem('thUser',name);
+  showMainApp();
+}
+
+function logout(){
+  currentUser=null;
+  sessionStorage.removeItem('thUser');
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('main-header').style.display='none';
+  document.getElementById('upload-section').style.display='none';
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-pw').value='';
+}
+
+// ======== SHOW MAIN APP ========
+function showMainApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('main-header').style.display='flex';
+
+  const isAdmin=currentUser.isAdmin;
+
+  // User pill
+  document.getElementById('user-pill-wrap').innerHTML=
+    isAdmin?`<div class="admin-pill">👑 Admin</div>`
+           :`<div class="user-pill">👤 ${currentUser.name}</div>`;
+
+  if(isAdmin){
+    // Admin sees everything
+    document.getElementById('export-btn').style.display='inline-block';
+    document.getElementById('tmpl-btn').style.display='inline-block';
+    document.getElementById('update-btn').style.display='inline-block';
+    document.getElementById('pwd-mgr-btn').style.display='inline-block';
+    document.getElementById('clear-btn').style.display='inline-block';
+
+    if(Object.keys(allData).length===0){
+      document.getElementById('upload-section').style.display='block';
+    } else {
+      showApp();
+    }
+  } else {
+    // Worker sees only their schedule
+    document.getElementById('export-btn').style.display='inline-block';
+    if(Object.keys(allData).length===0){
+      document.getElementById('app').style.display='block';
+      document.getElementById('loading').style.display='none';
+      document.getElementById('main-content').style.display='block';
+      document.getElementById('main-content').innerHTML='<div class="no-data">⏳ รอผู้จัดการอัปโหลดตารางงานค่ะ</div>';
+    } else {
+      showApp();
+    }
+  }
+}
+
+function showApp(){
+  document.getElementById('upload-section').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('loading').style.display='none';
+  document.getElementById('main-content').style.display='block';
+  populateUI(true);
+}
+
+// ======== DRAG DROP / FILE ========
+const dz=document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files[0])processFile(e.dataTransfer.files[0]);});
+function handleFile(e){if(e.target.files[0])processFile(e.target.files[0]);}
+
+function processFile(file){
+  document.getElementById('upload-section').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('loading').style.display='block';
+  document.getElementById('main-content').style.display='none';
+  const r=new FileReader();
+  r.onload=async e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      Object.assign(allData,parseWorkbook(wb));
+      await dbSet('allData',allData);
+      buildLoginDropdown();
+      showApp();
+      renderPwdMgr();
+    }catch(err){alert('Error: '+err.message);}
+  };
+  r.readAsArrayBuffer(file);
+  document.getElementById('file-input').value='';
+}
+
+async function clearAll(){if(!confirm('ลบข้อมูลทั้งหมด?'))return;for(const k of['allData','overrides','tmplPairs'])await dbDel(k);allData={};overrides={};tmplPairs={};showMainApp();}
+
+// ======== PASSWORD MANAGER ========
+function togglePwdMgr(){
+  const el=document.getElementById('pwd-mgr');
+  const show=el.style.display==='none';
+  el.style.display=show?'block':'none';
+  if(show)renderPwdMgr();
+}
+
+function renderPwdMgr(){
+  const grid=document.getElementById('pwd-grid');
+  const workers=[ADMIN_NAME,...getAllWorkers()];
+  grid.innerHTML=workers.map(w=>{
+    const cur=passwords[w]||'';
+    const label=w===ADMIN_NAME?'👑 Admin':w;
+    return `<div class="pwd-row">
+      <div class="pwd-name">${label}</div>
+      <input class="pwd-input" type="text" id="pwi-${w}" value="${esc(cur)}" placeholder="ตั้งรหัส">
+      <button class="pwd-save-btn" onclick="savePwd('${esc(w)}')">บันทึก</button>
+    </div>`;
+  }).join('');
+}
+
+async function savePwd(name){
+  const val=document.getElementById('pwi-'+name)?.value?.trim();
+  if(!val){alert('กรุณาใส่รหัสผ่าน');return;}
+  passwords[name]=val;
+  await dbSet('passwords',passwords);
+  alert(`บันทึกรหัสผ่าน "${name}" แล้วค่ะ`);
+}
+
+// ======== WEEK HELPERS ========
+function isoWeek(d){const u=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));u.setUTCDate(u.getUTCDate()+4-(u.getUTCDay()||7));return Math.ceil((((u-new Date(Date.UTC(u.getUTCFullYear(),0,1)))/86400000)+1)/7);}
+function wnum(lbl){const m=String(lbl).match(/\d+/);return m?parseInt(m[0]):0;}
+function wlbl(n){return'V.'+n;}
+
+function getTemplate(week){
+  const wn=wnum(week);
+  for(const[src,step]of Object.entries(tmplPairs)){
+    const sn=wnum(src);
+    if(wn>sn&&(wn-sn)%step===0)return src;
+  }
+  return null;
+}
+function resolveWorkers(week,day){
+  if(allData[week]?.[day]?.workers?.length)return allData[week][day].workers;
+  const t=getTemplate(week);
+  if(t&&allData[t]?.[day]?.workers)return allData[t][day].workers;
+  return[];
+}
+function resolveJobs(week,day,worker){
+  if(overrides[week]?.[day]?.[worker]!==undefined)return overrides[week][day][worker];
+  if(allData[week]?.[day]?.jobs?.[worker])return allData[week][day].jobs[worker];
+  const t=getTemplate(week);
+  if(t&&allData[t]?.[day]?.jobs?.[worker])return allData[t][day].jobs[worker];
+  return[];
+}
+function allDisplayWeeks(){
+  const set=new Set(Object.keys(allData));
+  const cur=isoWeek(new Date());
+  for(const[src,step]of Object.entries(tmplPairs)){
+    const sn=wnum(src);
+    for(let w=sn+step;w<=cur+14;w+=step)set.add(wlbl(w));
+  }
+  return Array.from(set).sort((a,b)=>wnum(a)-wnum(b));
+}
+
+// ======== PARSE ========
+function cv(v){return v!=null?String(v).trim():'';}
+function parseWorkbook(wb){
+  const res={};
+  wb.SheetNames.forEach(name=>{
+    const ws=wb.Sheets[name];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:false});
+    res[name]=parseSheet(rows);
+  });
+  return res;
+}
+function parseSheet(rows){
+  const result={};
+  let curDay=null,workerCols=[];
+  const DAY_RE=/(måndag|tisdag|onsdag|torsdag|fredag|lördag|söndag)\s*v\.?\s*\d+/i;
+  for(let r=0;r<rows.length;r++){
+    const row=rows[r]||[];
+    let foundDay=null;
+    for(const v of row){const s=cv(v);const m=DAY_RE.exec(s);if(m){foundDay=m[1].toLowerCase();break;}}
+    if(foundDay){
+      curDay=foundDay;
+      result[curDay]=result[curDay]||{workers:[],jobs:{}};
+      workerCols=[];
+      const nrow=rows[r+1]||[];
+      nrow.forEach((v,cidx)=>{
+        const s=cv(v);
+        if(!s||s.length<2)return;
+        if(/^\d/.test(s)||BREAK_RE.test(s)||TRAVEL_RE.test(s))return;
+        if(/[:]/.test(s)||T_RE.test(s))return;
+        if(/\d{4,}/.test(s))return;
+        const clean=s.replace(/\s*(ledig|LEDIG|leds)\s*/gi,'').trim();
+        const names=clean.split('+').map(n=>n.trim()).filter(n=>n.length>=2);
+        if(!names.length||!names.every(n=>NAME_RE.test(n)))return;
+        names.forEach(n=>{
+          if(!result[curDay].workers.includes(n))result[curDay].workers.push(n);
+          if(!result[curDay].jobs[n])result[curDay].jobs[n]=[];
+          workerCols.push({col:cidx,name:n,partners:names.filter(x=>x!==n)});
+        });
+      });
+      r++;continue;
+    }
+    if(!curDay||!workerCols.length)continue;
+    workerCols.forEach(({col,name,partners})=>{
+      const s=cv(row[col]);
+      if(!s||BREAK_RE.test(s)||SKIP_RE.test(s))return;
+      if(!T_RE.test(s))return;
+      const time=T_RE.exec(s)[0].trim();
+      const durRaw=cv(row[col+1]);
+      let dur=null;
+      if(durRaw){const m=/^(\d+[.,]\d+|\d+)$/.exec(durRaw);if(m){const v2=parseFloat(m[1].replace(',','.'));if(v2>0&&v2<12){const h=Math.floor(v2),mn=Math.round((v2-h)*60);dur=h?(mn?`${h}t ${mn}min`:`${h}t`):`${mn}min`;}}}
+      let customer='',addr='',phone='',notesArr=[],travel='';
+      for(let off=1;off<=10;off++){
+        const nr=r+off;if(nr>=rows.length)break;
+        const nc=cv((rows[nr]||[])[col]);if(!nc)continue;
+        if(T_RE.test(nc))break;
+        if(TRAVEL_RE.test(nc)){if(!travel)travel=nc;continue;}
+        if(BREAK_RE.test(nc))continue;
+        if(/^\d+\s*min$/i.test(nc))continue;
+        if(PHONE_RE.test(nc)&&!/[a-zA-ZåäöÅÄÖ]/.test(nc)){if(!phone)phone=nc;continue;}
+        if(/\d/.test(nc)&&nc.length>5&&!/^(kod|larm|port|dörr|nyckel|obs|glöm|ta med)/i.test(nc)&&!/^\d+([.,]\d+)?$/.test(nc)&&!/kund$/i.test(nc)){if(!addr){addr=nc;continue;}}
+        if(!customer&&nc.length>2&&!/^\d/.test(nc)&&!/kund$/i.test(nc)&&!SKIP_RE.test(nc)&&!/^(bara|obs!|obs )/i.test(nc)){customer=nc.replace(/\s*\d+([.,]\d+)?$/,'').trim();}
+        else if(nc.length>3&&!/^\d+([.,]\d+)?$/.test(nc)&&!/kund$/i.test(nc)){notesArr.push(nc);}
+      }
+      result[curDay].jobs[name].push({time,dur,customer,addr,phone,notes:notesArr.slice(0,3).join('\n'),travel,partners});
+    });
+  }
+  return result;
+}
+
+// ======== UI ========
+function populateUI(autoWeek){
+  const isAdmin=currentUser.isAdmin;
+  const weeks=allDisplayWeeks();
+  const ws=document.getElementById('week-select');
+  ws.innerHTML=weeks.map(w=>`<option value="${w}">${w}</option>`).join('');
+  if(autoWeek){const cur=wlbl(isoWeek(new Date()));const m=weeks.find(w=>wnum(w)===wnum(cur))||weeks.find(w=>wnum(w)>=wnum(cur));if(m)ws.value=m;}
+
+  const wsel=document.getElementById('worker-select');
+  const workerWrap=document.getElementById('worker-wrap');
+  if(isAdmin){
+    workerWrap.style.display='flex';
+    wsel.innerHTML=`<option value="">👥 ทุกคน</option>`+getAllWorkers().map(w=>`<option value="${w}">${w}</option>`).join('');
+  } else {
+    // Worker sees only themselves — hide the dropdown
+    workerWrap.style.display='none';
+    wsel.innerHTML=`<option value="${currentUser.name}">${currentUser.name}</option>`;
+  }
+  if(!isAdmin)document.getElementById('week-wrap').querySelector('label').textContent='สัปดาห์ของคุณ';
+
+  renderPwdMgr();
+  updateBadges();
+  renderAll();
+}
+
+function onWeekChange(){updateBadges();renderAll();}
+function updateBadges(){
+  const v=document.getElementById('week-select').value;
+  document.getElementById('twb').style.display=wnum(v)===isoWeek(new Date())?'inline-block':'none';
+  document.getElementById('rpb').style.display=getTemplate(v)?'inline-block':'none';
+  document.getElementById('modb').style.display=(overrides[v]&&Object.keys(overrides[v]).length)?'inline-block':'none';
+}
+
+function renderAll(){
+  const week=document.getElementById('week-select').value;
+  const wf=document.getElementById('worker-select').value;
+  const isAdmin=currentUser.isAdmin;
+  const out=document.getElementById('schedule-output');
+  out.innerHTML='';
+
+  const tmpl=getTemplate(week);
+  const wt=document.createElement('div');wt.className='week-title';
+  let wtH=week;
+  if(tmpl)wtH+=` <small>🔁 วนจาก ${tmpl}</small>`;
+  if(isAdmin&&overrides[week]&&Object.keys(overrides[week]).length)
+    wtH+=` <button class="reset-btn" onclick="resetWeek('${week}')">↩ คืนต้นแบบ</button>`;
+  wt.innerHTML=wtH;out.appendChild(wt);
+
+  let total=0;
+  DAY_ORDER.forEach(day=>{
+    let workers=resolveWorkers(week,day);
+    if(wf)workers=workers.filter(w=>w===wf);
+    if(!workers.length)return;
+    const jpw={};let maxRows=0;
+    workers.forEach(w=>{const j=resolveJobs(week,day,w);jpw[w]=j;if(j.length>maxRows)maxRows=j.length;total+=j.length;});
+    const freeWorkers=new Set(workers.filter(w=>!jpw[w]||jpw[w].length===0));
+
+    const sec=document.createElement('div');sec.className='day-section';
+    sec.innerHTML=`<div class="day-heading">วัน${DAY_TH[day]||day} — ${cap(day)}</div>`;
+    const wrap=document.createElement('div');wrap.className='schedule-table-wrap';
+    const tbl=document.createElement('table');tbl.className='schedule-table';
+
+    const headRow=document.createElement('tr');
+    headRow.innerHTML='<th>#</th>';
+    workers.forEach(w=>{const th=document.createElement('th');th.textContent=w;if(freeWorkers.has(w))th.className='is-free';headRow.appendChild(th);});
+    const thead=document.createElement('thead');thead.appendChild(headRow);tbl.appendChild(thead);
+    const tbody=document.createElement('tbody');
+
+    for(let i=0;i<=maxRows;i++){
+      const tr=document.createElement('tr');
+      if(i<maxRows){
+        tr.innerHTML=`<td>${i+1}</td>`;
+        workers.forEach(w=>{
+          const job=(jpw[w]||[])[i];
+          const td=document.createElement('td');
+          if(freeWorkers.has(w))td.className='is-free';
+          if(job){
+            const editable=isAdmin;
+            td.innerHTML=`<div class="job-cell"${editable?` onclick="openEdit('${esc(week)}','${day}','${esc(w)}',${i})"`:''}>
+              ${editable?'<span class="edit-hint">✏️</span>':''}
+              <div class="job-time">${esc(job.time)}${job.dur?`<span class="dur-tag">${job.dur}</span>`:''}</div>
+              ${job.partners&&job.partners.length?`<div class="pair-tag">👥 ${job.partners.map(esc).join(' + ')}</div>`:''}
+              ${job.customer?`<div class="job-customer">${esc(job.customer)}</div>`:''}
+              ${job.addr?`<div class="job-addr">📍 ${esc(job.addr)}</div>`:''}
+              ${job.phone?`<div class="job-phone">📞 ${esc(job.phone)}</div>`:''}
+              ${job.notes?`<div class="job-notes">${esc(job.notes)}</div>`:''}
+              ${job.travel?`<div class="travel-tag">🚗 ${esc(job.travel)}</div>`:''}
+            </div>`;
+          } else {
+            if(isAdmin){
+              td.innerHTML=`<div class="empty-slot" onclick="openAdd('${esc(week)}','${day}','${esc(w)}')"><span>— ว่าง —</span></div>`;
+            } else {
+              td.innerHTML=`<div class="empty-slot" style="cursor:default"><span>— ว่าง —</span></div>`;
+            }
+          }
+          tr.appendChild(td);
+        });
+      } else if(isAdmin){
+        tr.innerHTML=`<td>+</td>`;
+        workers.forEach(w=>{
+          const td=document.createElement('td');
+          if(freeWorkers.has(w))td.className='is-free';
+          td.innerHTML=`<button class="add-job-btn" onclick="openAdd('${esc(week)}','${day}','${esc(w)}')">+ เพิ่มนัด</button>`;
+          tr.appendChild(td);
+        });
+      }
+      tbody.appendChild(tr);
+    }
+    tbl.appendChild(tbody);wrap.appendChild(tbl);sec.appendChild(wrap);out.appendChild(sec);
+  });
+  if(!total)out.innerHTML+='<div class="no-data">ไม่พบข้อมูลสัปดาห์นี้</div>';
+  document.getElementById('info-badge').innerHTML=`<strong>${week}</strong> · <strong>${total}</strong> นัด`;
+}
+
+// ======== EDIT (Admin only) ========
+let _ctx=null;
+function openEdit(week,day,worker,idx){
+  if(!currentUser.isAdmin)return;
+  const job=resolveJobs(week,day,worker)[idx];if(!job)return;
+  _ctx={week,day,worker,idx,isNew:false};
+  document.getElementById('modal-title').textContent=`แก้ไข — ${worker}`;
+  document.getElementById('f-time').value=job.time||'';
+  document.getElementById('f-dur').value=job.dur||'';
+  document.getElementById('f-customer').value=job.customer||'';
+  document.getElementById('f-addr').value=job.addr||'';
+  document.getElementById('f-phone').value=job.phone||'';
+  document.getElementById('f-notes').value=job.notes||'';
+  document.getElementById('f-travel').value=job.travel||'';
+  document.getElementById('del-btn').style.display='inline-block';
+  document.getElementById('edit-modal').style.display='flex';
+}
+function openAdd(week,day,worker){
+  if(!currentUser.isAdmin)return;
+  _ctx={week,day,worker,idx:-1,isNew:true};
+  document.getElementById('modal-title').textContent=`เพิ่มนัด — ${worker}`;
+  ['f-time','f-dur','f-customer','f-addr','f-phone','f-notes','f-travel'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('del-btn').style.display='none';
+  document.getElementById('edit-modal').style.display='flex';
+}
+async function saveJob(){
+  const{week,day,worker,idx,isNew}=_ctx;
+  let jobs=[...resolveJobs(week,day,worker)];
+  const j={time:document.getElementById('f-time').value.trim(),dur:document.getElementById('f-dur').value.trim()||null,customer:document.getElementById('f-customer').value.trim(),addr:document.getElementById('f-addr').value.trim(),phone:document.getElementById('f-phone').value.trim(),notes:document.getElementById('f-notes').value.trim(),travel:document.getElementById('f-travel').value.trim(),partners:isNew?[]:(resolveJobs(week,day,worker)[idx]?.partners||[])};
+  if(isNew)jobs.push(j);else jobs[idx]=j;
+  if(!overrides[week])overrides[week]={};
+  if(!overrides[week][day])overrides[week][day]={};
+  overrides[week][day][worker]=jobs;
+  await dbSet('overrides',overrides);
+  closeModal();renderAll();updateBadges();
+}
+async function deleteJob(){
+  const{week,day,worker,idx}=_ctx;
+  let jobs=[...resolveJobs(week,day,worker)];
+  jobs.splice(idx,1);
+  if(!overrides[week])overrides[week]={};
+  if(!overrides[week][day])overrides[week][day]={};
+  overrides[week][day][worker]=jobs;
+  await dbSet('overrides',overrides);
+  closeModal();renderAll();updateBadges();
+}
+async function resetWeek(week){if(!confirm(`คืน ${week} กลับต้นแบบ?`))return;delete overrides[week];await dbSet('overrides',overrides);renderAll();updateBadges();}
+function closeModal(){document.getElementById('edit-modal').style.display='none';_ctx=null;}
+
+// ======== TEMPLATE ========
+let _pairIdx=0;
+function openTmplModal(){
+  const weeks=Object.keys(allData).sort((a,b)=>wnum(a)-wnum(b));
+  document.getElementById('tmpl-info').textContent=`Excel มี: ${weeks.join(', ')}`;
+  const list=document.getElementById('tmpl-list');list.innerHTML='';_pairIdx=0;
+  const entries=Object.entries(tmplPairs);
+  if(!entries.length)addTmplRow();else entries.forEach(([src,step])=>addTmplRow(src,step));
+  document.getElementById('tmpl-modal').style.display='flex';
+}
+function addTmplRow(src='',step=2){
+  const weeks=Object.keys(allData).sort((a,b)=>wnum(a)-wnum(b));
+  const id='pr'+(_pairIdx++);
+  const opts=weeks.map(w=>`<option value="${w}"${w===src?' selected':''}>${w}</option>`).join('');
+  const div=document.createElement('div');div.className='tmpl-row';div.id=id;
+  div.innerHTML=`<div class="select-wrap"><label>ต้นแบบ</label><select id="${id}s">${opts}</select></div>
+    <div style="color:var(--muted);padding-bottom:9px">→ ทุก</div>
+    <div class="select-wrap"><label>สัปดาห์</label><select id="${id}t"><option value="2"${step==2?' selected':''}>2 สัปดาห์</option><option value="4"${step==4?' selected':''}>4 สัปดาห์</option></select></div>
+    <button onclick="document.getElementById('${id}').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;padding-bottom:9px;font-size:15px">✕</button>`;
+  document.getElementById('tmpl-list').appendChild(div);
+}
+async function saveTmpl(){
+  const pairs={};
+  document.getElementById('tmpl-list').querySelectorAll('[id^="pr"]').forEach(row=>{
+    const id=row.id;const s=document.getElementById(id+'s')?.value;const t=parseInt(document.getElementById(id+'t')?.value||'2');
+    if(s)pairs[s]=t;
+  });
+  tmplPairs=pairs;await dbSet('tmplPairs',tmplPairs);closeTmplModal();populateUI(false);
+}
+function closeTmplModal(){document.getElementById('tmpl-modal').style.display='none';}
+
+// ======== EXPORT PDF ========
+function exportPDF(){
+  const week=document.getElementById('week-select').value;
+  const worker=document.getElementById('worker-select').value;
+  document.getElementById('ph-title').textContent='Thai Hem – ตารางงาน '+week;
+  const sub=worker?`พนักงาน: ${worker}`:(currentUser.isAdmin?'ทุกคน':currentUser.name);
+  const now=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('ph-sub').textContent=sub+' | วันที่: '+now;
+  window.print();
+}
+
+function cap(s){return s?s[0].toUpperCase()+s.slice(1):s;}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+</script>
+</body>
+</html>
